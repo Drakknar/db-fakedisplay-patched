@@ -7,9 +7,9 @@
 | Patch | What it changes |
 |---|---|
 | `hafas-geolocation-coordinates.pl` | `POST /_geolocation` also returns `lat`/`lon` for HAFAS stops (BVG etc.), not only for DB/IRIS stations. Needed to show those stops on a map. |
-| `default-db-bvg.pl` | The web frontend looks at DB and BVG by default. Nearby stops show DB + BVG instead of DB + ÖBB, `hafas=1` means BVG, and a station name that isn't a DB station is searched in BVG instead of ending in "not found". Set `DBFAKEDISPLAY_DEFAULT_HAFAS` on the container to use another HAFAS service. |
+| `default-db-bvg.pl` | Every search in the web frontend includes DB and BVG by default. A typed station name shows one list of DB and BVG matches, labelled "(DB)" and "(BVG)"; a single match opens its board directly. Nearby stops show DB + BVG instead of DB + ÖBB, and `hafas=1` means BVG. Train numbers, an explicitly chosen backend and direct board URLs work as upstream. Set `DBFAKEDISPLAY_DEFAULT_HAFAS` on the container to use another HAFAS service. |
 
-Each patch fails the build if upstream code changes and the patch no longer applies, so a broken image never gets published.
+Each patch fails the build if upstream code changes and the patch no longer applies. Before publishing, the workflow also starts the image and checks the patched behaviour against live DB/BVG data. Either way, a broken image never gets published.
 
 ## How it builds
 

@@ -65,7 +65,54 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: docker/build-push-action@v6
+      - name: Build test image
+        uses: docker/build-push-action@v6
+        if: steps.check.outputs.build == 'true'
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: dbf-test
+          build-args: |
+            BASE_IMAGE=docker.io/derfnull/db-fakedisplay@${{ steps.check.outputs.upstream }}
+
+      # Checks the patched behaviour against live DB/BVG data. If it fails,
+      # nothing is published and the next scheduled run tries again.
+      - name: Smoke test
+        if: steps.check.outputs.build == 'true'
+        run: |
+          set -euo pipefail
+          base=http://localhost:8092
+          berlin='lat=52.5251&lon=13.3694'
+          docker run -d --name dbf -p 8092:8092 -e 'DBFAKEDISPLAY_LISTEN=http://*:8092' dbf-test
+          trap 'docker logs dbf | tail -n 50' ERR
+          for _ in $(seq 60); do curl -fsS "$base/" >/dev/null 2>&1 && break; sleep 2; done
+
+          echo "BVG stops come with coordinates"
+          curl -fsS -X POST -d "$berlin&hafas=BVG" "$base/_geolocation" \
+            | jq -e '[.candidates[] | select(.hafas == "BVG" and .lat != null and .lon != null)] | length > 0'
+
+          echo "Nearby stops default to DB + BVG"
+          curl -fsS -X POST -d "$berlin" "$base/_geolocation" \
+            | jq -e '([.candidates[] | select(.hafas == 0)] | length > 0)
+                     and ([.candidates[] | select(.hafas == "BVG")] | length > 0)
+                     and ([.candidates[] | select(.hafas == "ÖBB")] | length == 0)'
+
+          echo "Typed search lists DB and BVG matches"
+          page=$(curl -sS "$base/_redirect?input=Alexanderplatz")
+          grep -q '(DB)' <<<"$page"
+          grep -q '(BVG)' <<<"$page"
+
+          echo "Picking a BVG stop opens its BVG board"
+          curl -sS -o /dev/null -w '%{redirect_url}\n' "$base/_redirect?input=900100003" | grep -q 'hafas=BVG'
+
+          echo "Picking a DB station opens its DB board"
+          target=$(curl -sS -o /dev/null -w '%{redirect_url}' "$base/_redirect?input=8011155")
+          echo "$target"
+          if [ -z "$target" ] || grep -q 'hafas=' <<<"$target"; then exit 1; fi
+
+      - name: Publish
+        uses: docker/build-push-action@v6
         if: steps.check.outputs.build == 'true'
         with:
           context: .

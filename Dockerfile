@@ -5,9 +5,11 @@ FROM ${BASE_IMAGE}
 
 COPY patches/ /tmp/patches/
 
-RUN set -e \
-	&& for patch in /tmp/patches/*.pl; do \
+# Plain ";" on purpose: "set -e" is ignored inside "&&" chains, which would let
+# a failing patch slip through.
+RUN set -e; \
+	for patch in /tmp/patches/*.pl; do \
 		perl "$patch" lib/DBInfoscreen/Controller/Stationboard.pm; \
-	done \
-	&& perl -Ilib -c lib/DBInfoscreen/Controller/Stationboard.pm \
-	&& rm -rf /tmp/patches
+	done; \
+	perl -Ilib -c lib/DBInfoscreen/Controller/Stationboard.pm; \
+	rm -rf /tmp/patches

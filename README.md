@@ -29,6 +29,10 @@ Published tags:
 
 If the GHCR package is private, run `docker login ghcr.io` on the server once with a token that has `read:packages`.
 
+## Development
+
+How the patch scripts work, how to test a change locally, and what to check when a build fails are in [`CLAUDE.md`](CLAUDE.md).
+
 ## Licence
 
 DBF is AGPL-3.0-or-later. Because this modified version runs as a public web service, keep this repository public so its source is available.

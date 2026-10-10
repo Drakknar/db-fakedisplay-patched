@@ -7,6 +7,7 @@
 | Patch | What it changes |
 |---|---|
 | `hafas-geolocation-coordinates.pl` | `POST /_geolocation` also returns `lat`/`lon` for HAFAS stops (BVG etc.), not only for DB/IRIS stations. Needed to show those stops on a map. |
+| `default-db-bvg.pl` | The web frontend looks at DB and BVG by default. Nearby stops show DB + BVG instead of DB + ÖBB, `hafas=1` means BVG, and a station name that isn't a DB station is searched in BVG instead of ending in "not found". Set `DBFAKEDISPLAY_DEFAULT_HAFAS` on the container to use another HAFAS service. |
 
 Each patch fails the build if upstream code changes and the patch no longer applies, so a broken image never gets published.
 

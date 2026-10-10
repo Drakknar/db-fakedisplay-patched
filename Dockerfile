@@ -6,6 +6,8 @@ FROM ${BASE_IMAGE}
 COPY patches/ /tmp/patches/
 
 RUN set -e \
-	&& perl /tmp/patches/hafas-geolocation-coordinates.pl lib/DBInfoscreen/Controller/Stationboard.pm \
+	&& for patch in /tmp/patches/*.pl; do \
+		perl "$patch" lib/DBInfoscreen/Controller/Stationboard.pm; \
+	done \
 	&& perl -Ilib -c lib/DBInfoscreen/Controller/Stationboard.pm \
 	&& rm -rf /tmp/patches

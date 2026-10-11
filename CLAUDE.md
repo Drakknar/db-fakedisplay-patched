@@ -46,6 +46,12 @@ README.md
 - **Checking the fix:** the report job runs `build.yml` on that branch, which never publishes from a branch, waits for it and posts the result on the pull request. If the check fails, the pull request becomes a draft.
 - **Issues:** if Claude can't fix the failure, or finds nothing to change while the build still fails, the report job opens an issue. Everything it opens is labelled `upstream-watch` and `upstream-fix` and assigned to the owner, and GitHub emails it.
 - **One at a time:** each failing build key is handled once, recorded on the `watch-state` branch by `.github/scripts/watch.sh`. An outage is retried after a day. While an `upstream-fix` pull request or issue is open, new failures aren't sent to Claude, so a new upstream image doesn't produce a second pull request. Close or merge it to re-enable. Failures after the owner's own pushes are never sent to Claude.
+- **Write access:** only the `publish` job, which runs on `main` only, can push to the registry. The build and test job runs read-only, because it runs upstream code and, on a branch, fixes proposed by Claude.
+- **Isolation (tested 2026-10-11):**
+  - **Before Claude runs:** the review job turns on the action's subprocess secret scrub and installs bubblewrap, so Claude's commands don't see the Claude token or any other process. It also blocks reading other processes' memory and removes sudo. Docker stays on because Claude needs it here.
+  - **After Claude:** the steps that follow ignore variables and PATH entries its commands could plant, and make the diff in a fresh clone.
+  - **Publishing:** the report job won't publish output that contains the token, or a piece of it, and deletes the review's artifact.
+  - **What's left:** Claude's commands never see the token, so leaking it would take a way around the sandbox, and Docker, which this job needs, amounts to root and is one. The scan is a second line of defence.
 
 ## Testing changes locally
 

@@ -41,6 +41,11 @@ README.md
    - BVG stop `900100003` redirects to a `hafas=BVG` board, and DB station `8011155` to a board without `hafas=`.
 4. **Publish** `:latest` and `:<run number>` (for rollback) only if the smoke test passed. Otherwise the next scheduled run retries.
 
+**When a scheduled build fails** on a new upstream version, the `triage`, `fix` and `report` jobs in the same workflow hand it to Claude (`anthropics/claude-code-action`, secret `CLAUDE_CODE_OAUTH_TOKEN`), which follows `.github/prompts/upstream-fix.md`.
+- **Separate access:** Claude works with read-only access. The `report` job turns its verdict and diff into a pull request on a `claude/fix-upstream-*` branch and starts `build.yml` there to check it. A run on a branch never publishes.
+- **Issues:** if Claude can't fix it, the report job opens an issue labelled `upstream-watch` and assigned to the owner. GitHub emails both the pull request and the issue.
+- **Once per build key:** each failing build key is handled once, recorded on the `watch-state` branch by `.github/scripts/watch.sh`. An outage is retried after a day. Failures after the owner's own pushes are not sent to Claude.
+
 ## Testing changes locally
 
 ```bash

@@ -1,8 +1,8 @@
 #!/usr/bin/env perl
 # Let POST /_geolocation search stops by name: with q=<name> instead of
-# lat/lon it returns the DB (IRIS) stations and the HAFAS stops (BVG by
-# default, or ?hafas=X) matching that name, in the same JSON format as the
-# coordinate search, including lat/lon. The Home Assistant spdbf_nearby
+# lat/lon it returns the DB (IRIS) stations and the HAFAS stops (?hafas=X,
+# ÖBB like upstream if not given) matching that name, in the same JSON
+# format as the coordinate search, including lat/lon. The Home Assistant spdbf_nearby
 # integration uses it for its stop search. Upstream only offers name matches
 # as an HTML list, with DS100 codes instead of EVA numbers for DB.
 #
@@ -89,7 +89,8 @@ sub stations_by_name {
 		return;
 	}
 
-	my $service = $ENV{DBFAKEDISPLAY_DEFAULT_HAFAS} || 'BVG';
+	# Same default as upstream's coordinate search.
+	my $service = 'ÖBB';
 	if (    $hafas
 		and $hafas ne '1'
 		and Travel::Status::DE::HAFAS::get_service($hafas) )

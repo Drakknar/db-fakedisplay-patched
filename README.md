@@ -7,8 +7,10 @@
 | Patch | What it changes |
 |---|---|
 | `hafas-geolocation-coordinates.pl` | `POST /_geolocation` also returns `lat`/`lon` for HAFAS stops (BVG etc.), not only for DB/IRIS stations. Needed to show those stops on a map. |
-| `default-db-bvg.pl` | Every search in the web frontend includes DB and BVG by default. A typed station name shows one list of DB and BVG matches, labelled "(DB)" and "(BVG)"; a single match opens its board directly. Nearby stops show DB + BVG instead of DB + ÖBB, and `hafas=1` means BVG. Train numbers, an explicitly chosen backend and direct board URLs work as upstream. Set `DBFAKEDISPLAY_DEFAULT_HAFAS` on the container to use another HAFAS service. |
-| `station-name-search.pl` | `POST /_geolocation` with `q=<name>` instead of `lat`/`lon` returns the DB and BVG stops matching that name (or another service with `hafas=X`), in the same JSON format, with EVA numbers and coordinates. Upstream only lists name matches as an HTML page. Used by the stop search in `ha-spdbf-nearby`. |
+| `hafas-trip-id.pl` | HAFAS departures in the JSON board (`?mode=json`) carry `tripId`, which opens the trip's details: `GET /z/<tripId>.json?hafas=<service>`. Upstream uses this id in its HTML board but leaves it out of the JSON. Used by the trip view in `ha-spdbf-nearby`. |
+| `station-name-search.pl` | `POST /_geolocation` with `q=<name>` instead of `lat`/`lon` returns the DB stations and the HAFAS stops (`hafas=X`, e.g. BVG) matching that name, in the same JSON format, with EVA numbers and coordinates. Upstream only lists name matches as an HTML page. Used by the stop search in `ha-spdbf-nearby`. |
+
+The patches are kept small on purpose. The web UI behaves as upstream's; only these JSON additions differ. Upstream doesn't take changes from outside for now, so they live here.
 
 Each patch fails the build if upstream code changes and the patch no longer applies. Before publishing, the workflow also starts the image and checks the patched behaviour against live DB/BVG data. Either way, a broken image never gets published.
 

@@ -32,8 +32,8 @@ If a fix changes something CLAUDE.md or README.md describes, update them too, in
     - **Same thing** (a JSON name search on `/_geolocation` with `q`, DB entries with EVA numbers and `lat`/`lon`, HAFAS matches with `lat`/`lon`): removing the patch is the fix, if the smoke test still passes.
     - **Something else:** rename the patch's function or parameter. Return `needs_attention` if renaming would change the API that `Drakknar/ha-spdbf-nearby` uses (`POST /_geolocation` with `q=`).
 - **Smoke test:** the checks use live DB and BVG data. If they fail while the patched code looks right, check DB and BVG directly before touching anything (curl `/_geolocation` and a board on the test image).
-- **Defaults:** DB + BVG as the default search is a firm requirement of the owner. A fix must keep it.
-- **Consumers:** `Drakknar/ha-spdbf-nearby` relies on HAFAS coordinates from `/_geolocation` and on its `q=` name search. A fix must keep both, and the smoke test checks both.
+- **Minimal patches:** the owner wants as little patched as possible, and the web UI as upstream's. Prefer the smallest change that keeps a patch's JSON behaviour. Don't add patches or suggest sending them upstream; the maintainer doesn't want outside changes for now.
+- **Consumers:** `Drakknar/ha-spdbf-nearby` relies on HAFAS coordinates from `/_geolocation`, its `q=` name search, and `tripId` in HAFAS JSON departures. A fix must keep all three, and the smoke test checks them.
 
 ## Your result
 

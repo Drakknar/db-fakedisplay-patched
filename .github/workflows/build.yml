@@ -101,29 +101,17 @@ jobs:
           curl -fsS -X POST -d "$berlin&hafas=BVG" "$base/_geolocation" \
             | jq -e '[.candidates[] | select(.hafas == "BVG" and .lat != null and .lon != null)] | length > 0'
 
-          echo "Nearby stops default to DB + BVG"
-          curl -fsS -X POST -d "$berlin" "$base/_geolocation" \
-            | jq -e '([.candidates[] | select(.hafas == 0)] | length > 0)
-                     and ([.candidates[] | select(.hafas == "BVG")] | length > 0)
-                     and ([.candidates[] | select(.hafas == "ÖBB")] | length == 0)'
-
           echo "Name search returns DB and BVG stops with EVA numbers and coordinates"
           curl -fsS -X POST --data-urlencode 'q=Alexanderplatz' -d 'hafas=BVG' "$base/_geolocation" \
             | jq -e '([.candidates[] | select(.hafas == 0 and (.eva | tostring) == "8011155" and .lat != null)] | length == 1)
                      and ([.candidates[] | select(.hafas == "BVG" and (.eva | tostring) == "900100003" and .lat != null)] | length == 1)'
 
-          echo "Typed search lists DB and BVG matches"
-          page=$(curl -sS "$base/_redirect?input=Alexanderplatz")
-          grep -q '(DB)' <<<"$page"
-          grep -q '(BVG)' <<<"$page"
-
-          echo "Picking a BVG stop opens its BVG board"
-          curl -sS -o /dev/null -w '%{redirect_url}\n' "$base/_redirect?input=900100003" | grep -q 'hafas=BVG'
-
-          echo "Picking a DB station opens its DB board"
-          target=$(curl -sS -o /dev/null -w '%{redirect_url}' "$base/_redirect?input=8011155")
-          echo "$target"
-          if [ -z "$target" ] || grep -q 'hafas=' <<<"$target"; then exit 1; fi
+          echo "HAFAS departures carry a trip id that opens the trip's details"
+          trip=$(curl -fsS "$base/900100003?mode=json&hafas=BVG&limit=20" \
+            | jq -er '[.departures[] | select(.tripId != null)][0].tripId')
+          echo "$trip"
+          curl -fsS "$base/z/$(jq -rn --arg t "$trip" '$t | @uri').json?hafas=BVG" \
+            | jq -e '.journey.id != null'
 
   # The only job with write access. It runs no upstream or proposed code;
   # it rebuilds the tested image from the same digest and Dockerfile.

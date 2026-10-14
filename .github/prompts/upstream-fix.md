@@ -27,8 +27,13 @@ If a fix changes something CLAUDE.md or README.md describes, update them too, in
 - **Upstream:** the image `docker.io/derfnull/db-fakedisplay`, built from https://github.com/derf/db-fakedisplay. The patches edit `lib/DBInfoscreen/Controller/Stationboard.pm`.
 - **Seeing upstream's change:** list the commits on GitHub since the last good build's date, and compare `Stationboard.pm` in both images: `docker create` each digest, then `docker cp` the file out.
 - **Patch scripts:** each one must still `die` when the code it expects is missing, and still exit 0 when upstream already has the change. Keep that contract.
+  - **Exception, `station-name-search.pl`:** it exits 0 only on its own `Patched (station-name-search.pl)` marker. It deliberately dies when upstream defines its own `stations_by_name` or reads a `q` parameter, because that can't be told apart from an unrelated upstream feature automatically. Don't relax that guard.
+  - **If it fires:** compare upstream's code with the patch.
+    - **Same thing** (a JSON name search on `/_geolocation` with `q`, DB entries with EVA numbers and `lat`/`lon`, HAFAS matches with `lat`/`lon`): removing the patch is the fix, if the smoke test still passes.
+    - **Something else:** rename the patch's function or parameter. Return `needs_attention` if renaming would change the API that `Drakknar/ha-spdbf-nearby` uses (`POST /_geolocation` with `q=`).
 - **Smoke test:** the checks use live DB and BVG data. If they fail while the patched code looks right, check DB and BVG directly before touching anything (curl `/_geolocation` and a board on the test image).
 - **Defaults:** DB + BVG as the default search is a firm requirement of the owner. A fix must keep it.
+- **Consumers:** `Drakknar/ha-spdbf-nearby` relies on HAFAS coordinates from `/_geolocation` and on its `q=` name search. A fix must keep both, and the smoke test checks both.
 
 ## Your result
 

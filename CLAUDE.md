@@ -14,6 +14,7 @@ Dockerfile                  FROM the upstream image (exact digest passed by the 
 patches/
   hafas-geolocation-coordinates.pl   POST /_geolocation also returns lat/lon for HAFAS stops (BVG etc.)
   default-db-bvg.pl                  Every frontend search includes DB and BVG by default
+  station-name-search.pl             POST /_geolocation with q=<name>: stop search by name as JSON
 .github/workflows/build.yml         Decide, build, smoke-test, publish
 README.md
 ```
@@ -27,16 +28,22 @@ README.md
   - **Nearby stops** show DB + BVG instead of upstream's DB + ÖBB, and `hafas=1` means BVG.
   - **Unchanged:** train numbers, an explicitly chosen backend and direct board URLs work as upstream.
   - **Other networks:** `DBFAKEDISPLAY_DEFAULT_HAFAS` on the container selects another HAFAS service.
+- **`station-name-search.pl`:**
+  - **What:** `POST /_geolocation` with `q=<name>` (optionally `hafas=X`) returns the DB (IRIS) stations, then the HAFAS stops, matching that name. The format is the coordinate search's, without `distance`: DB entries carry EVA numbers (not DS100 codes), and every entry has `lat`/`lon`. `ha-spdbf-nearby` uses it for its stop search.
+  - **Why:** upstream only offers name matches as an HTML `<select>` on the landing page, and its JSON mode returns just an error for ambiguous names.
+  - **Route:** it reuses `/_geolocation` so every patch stays within `Stationboard.pm`.
+  - **Details:** fewer than 2 characters return no candidates, DB matches are capped at 10, and a HAFAS "no match" (`LOCATION` error) is not reported as a `warning`.
 
 ## How the build works
 
-`.github/workflows/build.yml` runs every 6 hours, on push to `main` and on demand (with an optional `force`).
+`.github/workflows/build.yml` runs every 6 hours and on demand (with an optional `force`).
 
 1. **Build key:** upstream manifest digest + hash of `Dockerfile` and `patches/**`. It is compared with the `net.stefanopignataro.build-key` label on the published `:latest`. If they match, nothing happens.
 2. **Build** a local test image from the exact upstream digest.
 3. **Smoke test** against live DB/BVG data near Berlin Hbf:
    - BVG candidates from `/_geolocation` have coordinates.
    - The default nearby search returns DB and BVG and no ÖBB.
+   - The name search (`q=Alexanderplatz`) returns DB station `8011155` and BVG stop `900100003`, both with coordinates.
    - A typed search (`Alexanderplatz`) lists both "(DB)" and "(BVG)".
    - BVG stop `900100003` redirects to a `hafas=BVG` board, and DB station `8011155` to a board without `hafas=`.
 4. **Publish** `:latest` and `:<run number>` (for rollback) only if the smoke test passed. Otherwise the next scheduled run retries.

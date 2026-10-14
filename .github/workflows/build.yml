@@ -107,6 +107,11 @@ jobs:
                      and ([.candidates[] | select(.hafas == "BVG")] | length > 0)
                      and ([.candidates[] | select(.hafas == "ÖBB")] | length == 0)'
 
+          echo "Name search returns DB and BVG stops with EVA numbers and coordinates"
+          curl -fsS -X POST --data-urlencode 'q=Alexanderplatz' -d 'hafas=BVG' "$base/_geolocation" \
+            | jq -e '([.candidates[] | select(.hafas == 0 and (.eva | tostring) == "8011155" and .lat != null)] | length == 1)
+                     and ([.candidates[] | select(.hafas == "BVG" and (.eva | tostring) == "900100003" and .lat != null)] | length == 1)'
+
           echo "Typed search lists DB and BVG matches"
           page=$(curl -sS "$base/_redirect?input=Alexanderplatz")
           grep -q '(DB)' <<<"$page"

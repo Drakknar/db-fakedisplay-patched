@@ -23,10 +23,20 @@ open( my $in, '<', $file ) or die "open $file: $!\n";
 my $src = do { local $/; <$in> };
 close($in);
 
-if ( $src =~ m{sub stations_by_name} ) {
+# Only this patch's own marker counts as "already applied". Upstream code
+# that merely looks similar must stop the build instead: a second
+# stations_by_name would only be a "redefined" warning, and a q parameter of
+# upstream's own could mean something else.
+if ( $src =~ m{Patched \(station-name-search\.pl\)} ) {
 	print "name search already present, nothing to do\n";
 	exit 0;
 }
+die "upstream now defines stations_by_name: check whether it does the same"
+  . " as this patch, then drop or rename the patch\n"
+  if $src =~ m{sub \s+ stations_by_name \b}x;
+die "upstream now reads a q parameter: check whether it is a name search"
+  . " like this patch, then drop or adapt the patch\n"
+  if $src =~ m{param\( \s* ['"]q['"] \s* \)}x;
 
 # Turn a code snippet into a pattern that ignores differences in whitespace.
 sub loose {

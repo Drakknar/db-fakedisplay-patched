@@ -33,6 +33,8 @@ README.md
   - **Why:** upstream only offers name matches as an HTML `<select>` on the landing page, and its JSON mode returns just an error for ambiguous names.
   - **Route:** it reuses `/_geolocation` so every patch stays within `Stationboard.pm`.
   - **Details:** fewer than 2 characters return no candidates, DB matches are capped at 10, and a HAFAS "no match" (`LOCATION` error) is not reported as a `warning`.
+  - **Already applied?** Only the patch's own `Patched (station-name-search.pl)` marker counts; a matching function name doesn't.
+  - **Upstream clashes stop the build** with a message to check by hand: upstream defining its own `stations_by_name`, or reading a `q` parameter. A second `stations_by_name` would only be a Perl "redefined" warning, so the build would otherwise pass.
 
 ## How the build works
 

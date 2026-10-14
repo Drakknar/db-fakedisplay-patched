@@ -13,7 +13,7 @@ Each patch fails the build if upstream code changes and the patch no longer appl
 
 ## How it builds
 
-`.github/workflows/build.yml` runs every 6 hours, on every push to `main`, and on demand (Actions → Build patched image → Run workflow).
+`.github/workflows/build.yml` runs every 6 hours and on demand (Actions → Build patched image → Run workflow).
 It compares the current `derfnull/db-fakedisplay:latest` digest and a hash of this repo's patches with the label on the last published image. It only builds when one of them changed.
 
 Published tags:

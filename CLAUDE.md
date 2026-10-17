@@ -34,7 +34,7 @@ README.md
   - **What:** `POST /_geolocation` with `q=<name>` and `hafas=X` (upstream's default, ÖBB, if not given) returns the DB (IRIS) stations, then the HAFAS stops, matching that name. The format is the coordinate search's, without `distance`: DB entries carry EVA numbers (not DS100 codes), and every entry has `lat`/`lon`. `ha-spdbf-nearby` uses it for its stop search.
   - **Why:** upstream only offers name matches as an HTML `<select>` on the landing page, and its JSON mode returns just an error for ambiguous names.
   - **Route:** it reuses `/_geolocation` so every patch stays within `Stationboard.pm`.
-  - **Details:** fewer than 2 characters return no candidates, DB matches are capped at 10, and a HAFAS "no match" (`LOCATION` error) is not reported as a `warning`.
+  - **Details:** queries shorter than 2 or longer than 100 characters return no candidates (the IRIS lookup compares the query with every station, so a long POST body would block a worker). DB matches whose name contains the query (or whose DS100/EVA equals it) win; `get_station`'s closest-by-Levenshtein extras (e.g. "Neanderthal" for "Alexanderplatz") are kept only when nothing contains the query, as a typo fallback. DB matches are capped at 10, and a HAFAS "no match" (`LOCATION` error) is not reported as a `warning`.
   - **Already applied?** Only the patch's own `Patched (station-name-search.pl)` marker counts; a matching function name doesn't.
   - **Upstream clashes stop the build** with a message to check by hand: upstream defining its own `stations_by_name`, or reading a `q` parameter. A second `stations_by_name` would only be a Perl "redefined" warning, so the build would otherwise pass.
 
@@ -46,7 +46,7 @@ README.md
 2. **Build** a local test image from the exact upstream digest.
 3. **Smoke test** against live DB/BVG data near Berlin Hbf:
    - BVG candidates from `/_geolocation` have coordinates.
-   - The name search (`q=Alexanderplatz`) returns DB station `8011155` and BVG stop `900100003`, both with coordinates.
+   - The name search (`q=Alexanderplatz`) returns DB station `8011155` and BVG stop `900100003`, both with coordinates, and no DB station without "Alexanderplatz" in its name.
    - A BVG departure at `900100003` carries a `tripId`, and `/z/<tripId>.json?hafas=BVG` returns its journey.
 4. **Publish** `:latest` and `:<run number>` (for rollback) only if the smoke test passed. Otherwise the next scheduled run retries.
 

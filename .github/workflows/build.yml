@@ -104,7 +104,8 @@ jobs:
           echo "Name search returns DB and BVG stops with EVA numbers and coordinates"
           curl -fsS -X POST --data-urlencode 'q=Alexanderplatz' -d 'hafas=BVG' "$base/_geolocation" \
             | jq -e '([.candidates[] | select(.hafas == 0 and (.eva | tostring) == "8011155" and .lat != null)] | length == 1)
-                     and ([.candidates[] | select(.hafas == "BVG" and (.eva | tostring) == "900100003" and .lat != null)] | length == 1)'
+                     and ([.candidates[] | select(.hafas == "BVG" and (.eva | tostring) == "900100003" and .lat != null)] | length == 1)
+                     and all(.candidates[] | select(.hafas == 0); .name | ascii_downcase | contains("alexanderplatz"))'
 
           echo "HAFAS departures carry a trip id that opens the trip's details"
           trip=$(curl -fsS "$base/900100003?mode=json&hafas=BVG&limit=20" \

@@ -17,7 +17,12 @@ open( my $in, '<', $file ) or die "open $file: $!\n";
 my $src = do { local $/; <$in> };
 close($in);
 
-if ( $src =~ m{\$_->lat\b} ) {
+# Only lat in the HAFAS candidates of the coordinate search counts: any other
+# "$_->lat" (station-name-search.pl adds one, upstream might elsewhere) would
+# skip this patch while the coordinate search still lacks them.
+if ( $src =~ m{distance \s* => \s* \$_->distance_m \s* / \s* 1000, \s*
+	hafas \s* => \s* \$service, \s* lat \s* => \s* \$_->lat\b}x )
+{
 	print "HAFAS coordinates already present, nothing to do\n";
 	exit 0;
 }

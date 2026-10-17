@@ -19,7 +19,9 @@ open( my $in, '<', $file ) or die "open $file: $!\n";
 my $src = do { local $/; <$in> };
 close($in);
 
-if ( $src =~ m{tripId \s* =>}x ) {
+# Only a tripId next to the HAFAS trainNumber counts: one elsewhere (say, in
+# the IRIS branch) would skip this patch while HAFAS departures lack it.
+if ( $src =~ m{trainNumber \s* => \s* \$result->number, \s* tripId \s* =>}x ) {
 	print "HAFAS trip ids already present, nothing to do\n";
 	exit 0;
 }

@@ -83,8 +83,12 @@ OLD
 sub stations_by_name {
 	my ( $self, $query, $hafas ) = @_;
 
+	# No station name is near 100 characters, and the IRIS lookup below
+	# compares the query with every station (Levenshtein, about 1.5 s per 1000
+	# characters), so a long POST body (Mojolicious takes up to 16 MB) would
+	# block a worker until hypnotoad kills it.
 	$query =~ s{ ^ \s+ | \s+ $ }{}gx;
-	if ( length($query) < 2 ) {
+	if ( length($query) < 2 or length($query) > 100 ) {
 		$self->render( json => { candidates => [] } );
 		return;
 	}
@@ -108,6 +112,16 @@ sub stations_by_name {
 			hafas => 0,
 		}
 	} Travel::Status::DE::IRIS::Stations::get_station($query);
+
+	# get_station adds the stations closest by Levenshtein distance to the
+	# whole name, e.g. "Neanderthal" for "Alexanderplatz". Keep those only
+	# as a fallback for typos, when nothing contains the query.
+	my @containing = grep {
+		index( lc( $_->{name} ), lc($query) ) >= 0
+		  or ( $_->{ds100} // q{} ) eq $query
+		  or ( $_->{eva} // q{} ) eq $query
+	} @iris;
+	@iris = @containing if @containing;
 	splice( @iris, 10 ) if @iris > 10;
 
 	$self->render_later;

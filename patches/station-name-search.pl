@@ -45,9 +45,13 @@ sub loose {
 	return qr{$re};
 }
 
+# The match starts at the first and ends at the last character of the old
+# code, so the indentation before it and the line break after it stay in
+# the file: leave them out of the new code too.
 sub replace {
 	my ( $what, $old, $new ) = @_;
-	my $re    = loose($old);
+	my $re = loose($old);
+	$new =~ s{ \A \s+ | \s+ \z }{}gx;
 	my $count = () = $src =~ m{$re}g;
 	die "patch did not apply ($what: $count matches, expected 1):"
 	  . " upstream code changed\n"

@@ -32,7 +32,7 @@ my $count = $src =~ s{
 	(\n (\s*) trainNumber \s* => \s* \$result->number, \n)
 }{$1$2tripId            => \$result->id,\n}x;
 
-die "patch did not apply ($count matches): upstream code changed\n"
+die "patch did not apply (" . ( $count || 0 ) . " matches): upstream code changed\n"
   if $count != 1;
 
 open( my $out, '>', $file ) or die "write $file: $!\n";

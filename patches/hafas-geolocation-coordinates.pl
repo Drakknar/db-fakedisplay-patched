@@ -20,11 +20,12 @@ close($in);
 # Only lat in the HAFAS candidates of the coordinate search counts: any other
 # "$_->lat" (station-name-search.pl adds one, upstream might elsewhere) would
 # skip this patch while the coordinate search still lacks them.
-if ( $src =~ m{distance \s* => \s* \$_->distance_m \s* / \s* 1000, \s*
-	hafas \s* => \s* \$service, \s* lat \s* => \s* \$_->lat\b}x )
+if ($src =~ m{distance \s* => \s* \$_->distance_m \s* / \s* 1000, \s*
+	hafas \s* => \s* \$service, \s* lat \s* => \s* \$_->lat\b}x
+    )
 {
-	print "HAFAS coordinates already present, nothing to do\n";
-	exit 0;
+    print "HAFAS coordinates already present, nothing to do\n";
+    exit 0;
 }
 
 my $count = $src =~ s{
@@ -32,8 +33,10 @@ my $count = $src =~ s{
 	 (\s*) hafas \s* => \s* \$service, \n)
 }{$1$2lat      => \$_->lat,\n$2lon      => \$_->lon,\n}x;
 
-die "patch did not apply (" . ( $count || 0 ) . " matches): upstream code changed\n"
-  if $count != 1;
+die "patch did not apply ("
+    . ( $count || 0 )
+    . " matches): upstream code changed\n"
+    if $count != 1;
 
 open( my $out, '>', $file ) or die "write $file: $!\n";
 print {$out} $src;

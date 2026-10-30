@@ -28,35 +28,36 @@ close($in);
 # stations_by_name would only be a "redefined" warning, and a q parameter of
 # upstream's own could mean something else.
 if ( $src =~ m{Patched \(station-name-search\.pl\)} ) {
-	print "name search already present, nothing to do\n";
-	exit 0;
+    print "name search already present, nothing to do\n";
+    exit 0;
 }
 die "upstream now defines stations_by_name: check whether it does the same"
-  . " as this patch, then drop or rename the patch\n"
-  if $src =~ m{sub \s+ stations_by_name \b}x;
+    . " as this patch, then drop or rename the patch\n"
+    if $src =~ m{sub \s+ stations_by_name \b}x;
 die "upstream now reads a q parameter: check whether it is a name search"
-  . " like this patch, then drop or adapt the patch\n"
-  if $src =~ m{param\( \s* ['"]q['"] \s* \)}x;
+    . " like this patch, then drop or adapt the patch\n"
+    if $src =~ m{param\( \s* ['"]q['"] \s* \)}x;
 
 # Turn a code snippet into a pattern that ignores differences in whitespace.
 sub loose {
-	my ($code) = @_;
-	my $re = join( '\s*', map { quotemeta } grep { length } split( /\s+/, $code ) );
-	return qr{$re};
+    my ($code) = @_;
+    my $re
+        = join( '\s*', map {quotemeta} grep {length} split( /\s+/, $code ) );
+    return qr{$re};
 }
 
 # The match starts at the first and ends at the last character of the old
 # code, so the indentation before it and the line break after it stay in
 # the file: leave them out of the new code too.
 sub replace {
-	my ( $what, $old, $new ) = @_;
-	my $re = loose($old);
-	$new =~ s{ \A \s+ | \s+ \z }{}gx;
-	my $count = () = $src =~ m{$re}g;
-	die "patch did not apply ($what: $count matches, expected 1):"
-	  . " upstream code changed\n"
-	  if $count != 1;
-	$src =~ s{$re}{$new};
+    my ( $what, $old, $new ) = @_;
+    my $re = loose($old);
+    $new =~ s{ \A \s+ | \s+ \z }{}gx;
+    my $count = () = $src =~ m{$re}g;
+    die "patch did not apply ($what: $count matches, expected 1):"
+        . " upstream code changed\n"
+        if $count != 1;
+    $src =~ s{$re}{$new};
 }
 
 # 1. stations_by_coordinates hands q=<name> to stations_by_name, before it

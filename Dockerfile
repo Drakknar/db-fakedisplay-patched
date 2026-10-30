@@ -1,6 +1,8 @@
 # Upstream DBF image plus local patches. The workflow passes the exact upstream
 # digest it checked, so each build is reproducible.
 ARG BASE_IMAGE=derfnull/db-fakedisplay:latest
+# The build workflow passes the exact upstream digest as BASE_IMAGE.
+# hadolint ignore=DL3006
 FROM ${BASE_IMAGE}
 
 COPY patches/ /tmp/patches/

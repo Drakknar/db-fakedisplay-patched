@@ -27,6 +27,23 @@ jobs:
       - name: Build image
         run: docker build --pull -t checks:local .
 
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # DBF publishes no Perl style of its own: Perl::Critic's gentle level and perltidy's Perl Best Practices.
+      - name: Install perltidy and Perl::Critic
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq perltidy libperl-critic-perl
+      - name: perlcritic
+        run: perlcritic --gentle patches/
+      - name: perltidy
+        run: |
+          status=0
+          for f in patches/*.pl; do perltidy -pbp -st -se "$f" | diff -u "$f" - || status=1; done
+          exit "$status"
+      - name: hadolint
+        run: docker run --rm -i hadolint/hadolint:v2.12.0 < Dockerfile
+
   actionlint:
     runs-on: ubuntu-latest
     steps:

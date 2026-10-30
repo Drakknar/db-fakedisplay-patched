@@ -21,9 +21,10 @@ close($in);
 
 # Only a tripId next to the HAFAS trainNumber counts: one elsewhere (say, in
 # the IRIS branch) would skip this patch while HAFAS departures lack it.
-if ( $src =~ m{trainNumber \s* => \s* \$result->number, \s* tripId \s* =>}x ) {
-	print "HAFAS trip ids already present, nothing to do\n";
-	exit 0;
+if ( $src =~ m{trainNumber \s* => \s* \$result->number, \s* tripId \s* =>}x )
+{
+    print "HAFAS trip ids already present, nothing to do\n";
+    exit 0;
 }
 
 # The HAFAS branch of the JSON departure list; IRIS departures have
@@ -32,8 +33,10 @@ my $count = $src =~ s{
 	(\n (\s*) trainNumber \s* => \s* \$result->number, \n)
 }{$1$2tripId            => \$result->id,\n}x;
 
-die "patch did not apply (" . ( $count || 0 ) . " matches): upstream code changed\n"
-  if $count != 1;
+die "patch did not apply ("
+    . ( $count || 0 )
+    . " matches): upstream code changed\n"
+    if $count != 1;
 
 open( my $out, '>', $file ) or die "write $file: $!\n";
 print {$out} $src;

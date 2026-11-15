@@ -1,5 +1,7 @@
 # db-fakedisplay (patched)
 
+<img src="assets/icon.svg" alt="" width="96" align="right">
+
 [DBF](https://github.com/derf/db-fakedisplay) by Birte Kristina Friesel, rebuilt automatically with small local patches.
 
 ## Patches
